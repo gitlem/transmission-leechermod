@@ -174,6 +174,35 @@ tr_torrentUsesSessionLimits( const tr_torrent * tor )
 ****
 ***/
 
+uint8_t
+tr_isCheatMode( uint8_t mode ) {
+    if( mode <= 3 )
+        return 1;
+    else
+        return 0;
+}
+
+void
+tr_torrentSetCheatMode( tr_torrent * tor, uint8_t mode )
+{
+    assert( tr_isTorrent( tor ) );
+
+    if( mode != tor->cheatMode)
+    {
+        tor->cheatMode = mode;
+
+        tr_torrentSetDirty( tor );
+    }
+}
+
+uint8_t
+tr_torrentGetCheatMode( const tr_torrent * tor )
+{
+    assert( tr_isTorrent( tor ) );
+
+    return tor->cheatMode;
+}
+
 void
 tr_torrentSetRatioMode( tr_torrent *  tor, tr_ratiolimit mode )
 {
@@ -659,6 +688,13 @@ torrentRealInit( tr_torrent * tor, const tr_ctor * ctor )
         tr_torrentSetRatioMode( tor, TR_RATIOLIMIT_GLOBAL );
         tr_torrentSetRatioLimit( tor, tr_sessionGetRatioLimit( tor->session ) );
     }
+
+    if( !( loaded & TR_FR_CHEATMODE ) )
+    {
+        tr_torrentSetCheatMode( tor, 0 );
+    }
+    // random float, range 0.0 to 0.2
+    tor->cheatRand = (float)tr_cryptoRandInt(200000)/1000000;
 
     tor->completeness = tr_cpGetStatus( &tor->completion );
 

@@ -95,6 +95,10 @@
 						<div class="inspector_label">Comment:</div>
 						<div id="torrent_inspector_comment"></div>
 					</div>
+					<div class="inspector_row">
+						<div class="inspector_label">Cheat Mode:</div>
+						<div id="torrent_inspector_cheat_mode"></div>
+					</div>
 				</div><!-- class="inspector_group"-->
 				
 				<div class="inspector_group">
@@ -363,6 +367,16 @@
 				<li id="context_verify">Verify Local Data</li>
 				<li class="separator"></li>
 				<li id="context_toggle_inspector">Show Inspector</li>
+				<li class="separator"></li>
+				<li id="cheatMode">
+					Cheat Mode:
+					<select id="cheatModeSelect">
+					<option value="0">No Cheat (default)</option>
+					<option value="1">Always Leecher, report 0%</option>
+					<option value="2">Always Seeder, report real up, no down</option>
+					<option value="3">Report real down and up=down*2</option>
+					</select>
+				</li>
 				<li class="separator"></li>
 				<li id="context_select_all" class="context_select_all">Select All</li>
 				<li id="context_deselect_all" class="context_deselect_all">Deselect All</li>

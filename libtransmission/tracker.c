@@ -757,6 +757,54 @@ freeRequest( struct tr_tracker_request * req )
 }
 
 static void
+letsCheat( const tr_torrent * tor,
+           uint64_t * up,
+           uint64_t * down,
+           uint64_t * corrupt,
+           uint64_t * left,
+           char ** eventName )
+{
+    uint8_t cheatMode = tr_torrentGetCheatMode( tor );
+
+    if(cheatMode == 0) // no cheat
+    {
+        *up       = tor->uploadedCur;
+        *down     = tor->downloadedCur;
+        *corrupt  = tor->corruptCur;
+        *left     = tr_cpLeftUntilComplete( &tor->completion );
+    }
+    else if(cheatMode == 1) // always leecher
+    {
+        *up       = 0;
+        *down     = 0;
+        *corrupt  = 0;
+        *left     = tor->info.totalSize;
+        if( !strcmp( *eventName, "completed" ) )
+        {
+            *eventName = 0;
+        }
+    }
+    else if(cheatMode == 2) // always seeder, report real upload
+    {
+        *up       = tor->uploadedCur;
+        *down     = 0;
+        *corrupt  = 0;
+        *left     = 0;
+        if( !strcmp( *eventName, "completed" ) )
+        {
+            *eventName = 0;
+        }
+    }
+    else if(cheatMode == 3) // report (download * 1.9 <=> 2.1) upload
+    {
+        *up       = (int64_t)((1.9+tor->cheatRand)*tor->downloadedCur);
+        *down     = tor->downloadedCur;
+        *corrupt  = tor->corruptCur;
+        *left     = tr_cpLeftUntilComplete( &tor->completion );
+    }
+}
+
+static void
 buildTrackerRequestURI( tr_tracker *       t,
                         const tr_torrent * torrent,
                         const char *       eventName,
@@ -765,6 +813,10 @@ buildTrackerRequestURI( tr_tracker *       t,
     const int    isStopping = !strcmp( eventName, "stopped" );
     const int    numwant = isStopping ? 0 : NUMWANT;
     const char * ann = getCurrentAddressFromTorrent( t, torrent )->announce;
+
+    uint64_t up = 0, down = 0, corrupt = 0, left = 0;
+
+    letsCheat( torrent, &up, &down, &corrupt, &left, (char**)&eventName );
 
     evbuffer_add_printf( buf, "%cinfo_hash=%s"
                               "&peer_id=%s"
@@ -781,10 +833,10 @@ buildTrackerRequestURI( tr_tracker *       t,
                               t->escaped,
                               t->peer_id,
                               tr_sessionGetPeerPort( t->session ),
-                              torrent->uploadedCur,
-                              torrent->downloadedCur,
-                              torrent->corruptCur,
-                              tr_cpLeftUntilComplete( &torrent->completion ),
+                              up,
+                              down,
+                              corrupt,
+                              left,
                               numwant,
                               t->key_param );
 
