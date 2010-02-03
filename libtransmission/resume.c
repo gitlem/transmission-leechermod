@@ -54,6 +54,7 @@
 #define KEY_SPEEDLIMIT_UP_MODE     "up-mode"
 #define KEY_RATIOLIMIT_RATIO       "ratio-limit"
 #define KEY_RATIOLIMIT_MODE        "ratio-mode"
+#define KEY_CHEATMODE              "cheat-mode"
 
 #define KEY_PROGRESS_MTIMES   "mtimes"
 #define KEY_PROGRESS_BITFIELD "bitfield"
@@ -288,6 +289,13 @@ saveRatioLimits( tr_benc * dict, const tr_torrent * tor )
 }
 
 static void
+saveCheatMode( tr_benc * dict, const tr_torrent * tor )
+{
+    tr_bencDictReserve( dict, 1 );
+    tr_bencDictAddInt( dict, KEY_CHEATMODE, tr_torrentGetCheatMode( tor ) );
+}
+
+static void
 loadSingleSpeedLimit( tr_benc * d, tr_direction dir, tr_torrent * tor )
 {
     int64_t i;
@@ -365,6 +373,21 @@ loadRatioLimits( tr_benc *    dict,
         if( tr_bencDictFindInt( d, KEY_RATIOLIMIT_MODE, &i ) )
             tr_torrentSetRatioMode( tor, i );
       ret = TR_FR_RATIOLIMIT;
+    }
+
+    return ret;
+}
+
+static uint64_t
+loadCheatMode( tr_benc * dict, tr_torrent * tor)
+{
+    uint64_t ret = 0;
+    int64_t val;
+
+    if( tr_bencDictFindInt( dict, KEY_CHEATMODE, &val ) )
+    {
+        tr_torrentSetCheatMode( tor, (uint8_t) val );
+        ret = TR_FR_CHEATMODE;
     }
 
     return ret;
@@ -522,6 +545,7 @@ tr_torrentSaveResume( const tr_torrent * tor )
     saveProgress( &top, tor );
     saveSpeedLimits( &top, tor );
     saveRatioLimits( &top, tor );
+    saveCheatMode( &top, tor );
 
     filename = getResumeFilename( tor );
     tr_bencToFile( &top, TR_FMT_BENC, filename );
@@ -655,6 +679,9 @@ loadFromFile( tr_torrent * tor,
 
     if( fieldsToLoad & TR_FR_RATIOLIMIT )
         fieldsLoaded |= loadRatioLimits( &top, tor );
+
+    if( fieldsToLoad & TR_FR_CHEATMODE )
+        fieldsLoaded |= loadCheatMode( &top, tor );
 
     /* loading the resume file triggers of a lot of changes,
      * but none of them needs to trigger a re-saving of the

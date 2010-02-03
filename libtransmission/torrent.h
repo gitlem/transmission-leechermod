@@ -251,6 +251,9 @@ struct tr_torrent
     double                     desiredRatio;
     tr_ratiolimit              ratioLimitMode;
 
+    uint8_t                    cheatMode;
+    float                      cheatRand;
+
     uint64_t                   preVerifyTotal;
 };
 

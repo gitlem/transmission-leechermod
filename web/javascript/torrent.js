@@ -33,7 +33,7 @@ Torrent._DynamicFields = [ 'downloadedEver', 'error', 'errorString', 'eta',
     'haveUnchecked', 'haveValid', 'leftUntilDone', 'metadataPercentComplete', 'peersConnected',
     'peersGettingFromUs', 'peersSendingToUs', 'rateDownload', 'rateUpload',
     'recheckProgress', 'sizeWhenDone', 'status',
-    'uploadedEver', 'uploadRatio', 'seedRatioLimit', 'seedRatioMode', 'downloadDir' ]
+    'uploadedEver', 'uploadRatio', 'seedRatioLimit', 'seedRatioMode', 'downloadDir', 'cheatMode' ]
 
 Torrent.prototype =
 {
@@ -224,6 +224,25 @@ Torrent.prototype =
 			default:                      return -1;
 		}
 	},
+	cheatMode: function() {
+		return this._cheat_mode;
+	},
+	cheatModeChanged: function(event, newvalue) {
+		to = this;
+		if(newvalue >= 0 && newvalue <= 3) {
+			var o = {
+				method: 'torrent-set',
+				arguments: {
+					ids: this._id,
+					cheatMode: newvalue
+				}
+			};
+
+			this._controller.remote.sendRequest( o, function( data ) {
+				to._controller.refreshTorrents(to._id);
+			});
+		}
+	},
 	
 	/*--------------------------------------------
 	 *
@@ -336,6 +355,7 @@ Torrent.prototype =
 		this._state                   = data.status;
 		this._download_dir            = data.downloadDir;
 		this._metadataPercentComplete = data.metadataPercentComplete;
+		this._cheat_mode            = data.cheatMode;
 
 		if (data.fileStats)
 			this.refreshFileModel( data );
