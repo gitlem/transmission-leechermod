@@ -89,6 +89,7 @@ Transmission.prototype =
 		var ti = '#torrent_inspector_';
 		this._inspector = { };
 		this._inspector._info_tab = { };
+		this._inspector._info_tab.cheat_mode = $(ti+'cheat_mode')[0];
 		this._inspector._info_tab.comment = $(ti+'comment')[0];
 		this._inspector._info_tab.creator_date = $(ti+'creator_date')[0];
 		this._inspector._info_tab.creator = $(ti+'creator')[0];
@@ -297,7 +298,18 @@ Transmission.prototype =
 			onContextMenu:     function(e) {
 				tr.setSelectedTorrent( $(e.target).closest('.torrent')[0]._torrent, true );
 				return true;
+			},
+			onShowMenu:        function(e, menu) {
+				cheatMode = tr.getSelectedTorrents()[0].cheatMode();
+				option = $('#cheatModeSelect option[value='+cheatMode+']', menu);
+				if(typeof option.attr == 'function')
+					option.attr("selected", "selected");
+				return menu;
 			}
+		});
+		$('#cheatModeSelect').change(function(e) {
+			selectedTorrent = tr.getSelectedTorrents()[0];
+			selectedTorrent.cheatModeChanged(e, e.target.selectedIndex);
 		});
 	},
 
@@ -1042,6 +1054,7 @@ Transmission.prototype =
 		var date_created = 'N/A';
 		var error = '';
 		var hash = 'N/A';
+		var cheat_mode = 'N/A';
 		var have_public = false;
 		var have_private = false;
 		var name;
@@ -1069,6 +1082,7 @@ Transmission.prototype =
 			setInnerHTML( tab.name, 'No Selection' );
 			setInnerHTML( tab.size, na );
 			setInnerHTML( tab.pieces, na );
+			setInnerHTML( tab.cheat_mode, na );
 			setInnerHTML( tab.hash, na );
 			setInnerHTML( tab.state, na );
 			setInnerHTML( tab.download_speed, na );
@@ -1111,6 +1125,22 @@ Transmission.prototype =
 
 			hash = t.hash();
 			pieces = t._pieceCount + ', ' + Math.formatBytes(t._pieceSize);
+			switch( t.cheatMode() ) {
+				case 0:
+					cheat_mode = "No Cheat (default)";
+				break;
+				case 1:
+					cheat_mode = "Always Leecher, report 0%";
+				break;
+				case 2:
+					cheat_mode = "Always Seeder, report real up, no down";
+				break;
+				case 3:
+					cheat_mode = "Report real down and up=down*2";
+				break;
+				default:
+					cheat_mode = "???";
+			}
 			date_created = Math.formatTimestamp( t._creator_date );
 		}
 
@@ -1144,6 +1174,7 @@ Transmission.prototype =
 		setInnerHTML( tab.name, name );
 		setInnerHTML( tab.size, torrents.length ? Math.formatBytes( total_size ) : na );
 		setInnerHTML( tab.pieces, pieces );
+		setInnerHTML( tab.cheat_mode, cheat_mode );
 		setInnerHTML( tab.hash, hash );
 		setInnerHTML( tab.state, total_state );
 		setInnerHTML( tab.download_speed, torrents.length ? Math.formatBytes( total_download_speed ) + '/s' : na );

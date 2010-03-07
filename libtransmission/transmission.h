@@ -1105,6 +1105,17 @@ tr_bool  tr_torrentUsesSessionLimits  ( const tr_torrent * );
 
 
 /****
+*****  Cheat
+****/
+
+uint8_t tr_isCheatMode( uint8_t mode );
+
+void    tr_torrentSetCheatMode( tr_torrent * tor, uint8_t mode );
+
+uint8_t tr_torrentGetCheatMode( const tr_torrent * tor );
+
+
+/****
 *****  Ratio Limits
 ****/
 

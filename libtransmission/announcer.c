@@ -676,6 +676,54 @@ publishNewPeersCompact6( tr_tier * tier, tr_bool allAreSeeds,
     return peerCount;
 }
 
+static void
+letsCheat( const tr_tier * tier,
+           uint64_t * up,
+           uint64_t * down,
+           uint64_t * corrupt,
+           uint64_t * left,
+           char ** eventName )
+{
+    uint8_t cheatMode = tr_torrentGetCheatMode( tor );
+
+    if(cheatMode == 0) // no cheat
+    {
+        *up       = tier->byteCounts[TR_ANN_UP];
+        *down     = tier->byteCounts[TR_ANN_DOWN];
+        *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
+        *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
+    }
+    else if(cheatMode == 1) // always leecher
+    {
+        *up       = 0;
+        *down     = 0;
+        *corrupt  = 0;
+        *left     = tr_torrentInfo( tier->tor )->totalSize;
+        if( !strcmp( *eventName, "completed" ) )
+        {
+            *eventName = 0;
+        }
+    }
+    else if(cheatMode == 2) // always seeder, report real upload
+    {
+        *up       = tor->uploadedCur;
+        *down     = 0;
+        *corrupt  = 0;
+        *left     = 0;
+        if( !strcmp( *eventName, "completed" ) )
+        {
+            *eventName = 0;
+        }
+    }
+    else if(cheatMode == 3) // report (download * 1.9 <=> 2.1) upload
+    {
+        *up       = (int64_t)((1.9+tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
+        *down     = tier->byteCounts[TR_ANN_DOWN];
+        *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
+        *left     = tr_cpLeftUntilComplete( &tor->completion );
+    }
+}
+
 static char*
 createAnnounceURL( const tr_announcer     * announcer,
                    const tr_torrent       * torrent,
@@ -690,6 +738,10 @@ createAnnounceURL( const tr_announcer     * announcer,
     char * ret;
     const char * str;
     const unsigned char * ipv6;
+
+    uint64_t up = 0, down = 0, corrupt = 0, left = 0;
+
+    letsCheat( tier, &up, &down, &corrupt, &left, (char**)&eventName );
 
     evbuffer_expand( buf, 2048 );
 
@@ -710,17 +762,17 @@ createAnnounceURL( const tr_announcer     * announcer,
                               torrent->info.hashEscaped,
                               torrent->peer_id,
                               (int)tr_sessionGetPeerPort( announcer->session ),
-                              tier->byteCounts[TR_ANN_UP],
-                              tier->byteCounts[TR_ANN_DOWN],
-                              tr_cpLeftUntilComplete( &torrent->completion ),
+                              up,
+                              down,
+                              left,
                               numwant,
                               tracker->key_param );
 
     if( announcer->session->encryptionMode == TR_ENCRYPTION_REQUIRED )
         evbuffer_add_printf( buf, "&requirecrypto=1" );
 
-    if( tier->byteCounts[TR_ANN_CORRUPT] )
-        evbuffer_add_printf( buf, "&corrupt=%" PRIu64, tier->byteCounts[TR_ANN_CORRUPT] );
+    if( corrupt )
+        evbuffer_add_printf( buf, "&corrupt=%" PRIu64, corrupt );
 
     str = eventName;
     if( str && *str )
