@@ -1332,8 +1332,8 @@ static void sleepCallback(void * controller, io_service_t y, natural_t messageTy
                     message = [NSString stringWithFormat: NSLocalizedString(@"There are %d transfers (%d active).",
                                 "Removal confirm panel -> message part 1"), selected, active];
                 message = [message stringByAppendingFormat: @" %@",
-                                NSLocalizedString(@"Once removed, continuing the transfers will require the torrent files.",
-                                "Removal confirm panel -> message part 2")];
+                            NSLocalizedString(@"Once removed, continuing the transfers will require the torrent files.",
+                            "Removal confirm panel -> message part 2")];
             }
             
             NSBeginAlertSheet(title, NSLocalizedString(@"Remove", "Removal confirm panel -> button"),

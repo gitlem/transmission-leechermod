@@ -870,7 +870,8 @@ tr_torrentChangeMyPort( tr_torrent * tor )
 {
     assert( tr_isTorrent( tor  ) );
 
-    tr_announcerChangeMyPort( tor );
+    if( tor->isRunning )
+        tr_announcerChangeMyPort( tor );
 }
 
 static inline void
@@ -2380,8 +2381,8 @@ deleteLocalData( tr_torrent * tor, tr_fileFunc fileFunc )
             deleteLocalFile( s[i], fileFunc );
 
     /* now blow away any remaining torrent files, such as torrent files in dirty folders */
-    for( f=0; f<tor->info.fileCount; ++f ) {
-        char * path = tr_buildPath( tor->currentDir, tor->info.files[f].name, NULL );
+    for( i=0, n=tr_ptrArraySize( &torrentFiles ); i<n; ++i ) {
+        char * path = tr_buildPath( tor->currentDir, tr_ptrArrayNth( &torrentFiles, i ), NULL );
         deleteLocalFile( path, fileFunc );
         tr_free( path );
     }
@@ -2460,6 +2461,31 @@ struct LocationData
     tr_torrent * tor;
 };
 
+static tr_bool
+sameInode( const char * path1, const char * path2 )
+{
+    int i1, i2;
+    struct stat s1, s2;
+
+    s1.st_ino = 1;
+    i1 = stat( path1, &s1 );
+
+    s2.st_ino = 2;
+    i2 = stat( path2, &s2 );
+
+    if( !i1 && !i2 ) {
+        tr_dbg( "path1 inode is %"PRIu64"; path2 inode is %"PRIu64,
+                (uint64_t)s1.st_ino,
+                (uint64_t)s2.st_ino );
+        return s1.st_ino == s2.st_ino;
+    }
+
+    /* either one, or the other, or both don't exist... */
+    tr_dbg( "stat(%s) returned %d\n", path1, i1 );
+    tr_dbg( "stat(%s) returned %d\n", path2, i2 );
+    return FALSE;
+}
+
 static void
 setLocation( void * vdata )
 {
@@ -2473,7 +2499,12 @@ setLocation( void * vdata )
 
     assert( tr_isTorrent( tor ) );
 
-    if( strcmp( location, tor->currentDir ) )
+    tr_dbg( "Moving \"%s\" location from currentDir \"%s\" to \"%s\"",
+            tr_torrentName(tor), tor->currentDir, location );
+
+    tr_mkdirp( location, 0777 );
+
+    if( !sameInode( location, tor->currentDir ) )
     {
         tr_file_index_t i;
 
@@ -2500,6 +2531,8 @@ setLocation( void * vdata )
             {
                 char * oldpath = tr_buildPath( oldbase, sub, NULL );
                 char * newpath = tr_buildPath( location, sub, NULL );
+
+                tr_dbg( "Found file #%d: %s", (int)i, oldpath );
 
                 if( do_move )
                 {
@@ -2545,6 +2578,13 @@ setLocation( void * vdata )
                 tr_torrentStart( tor );
             }
         }
+    }
+
+    if( !err && do_move )
+    {
+        tr_free( tor->incompleteDir );
+        tor->incompleteDir = NULL;
+        tor->currentDir = tor->downloadDir;
     }
 
     if( data->setme_state )
