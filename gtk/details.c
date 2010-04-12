@@ -277,9 +277,11 @@ refreshOptions( struct DetailsImpl * di, tr_torrent ** torrents, int n )
         for( i=1; i<n; ++i)
             if( baseline != tr_torrentGetCheatMode( torrents[i] ) )
                 break;
-        if( i == n )
-            set_int_combo_if_different( di->cheatModeCombo,
-                                        di->cheatModeComboTag, 0, baseline);
+        if( i == n ) {
+            g_signal_handler_block( di->cheatModeCombo, di->cheatModeComboTag );
+            gtr_priority_combo_set_value( di->cheatModeCombo, baseline);
+            g_signal_handler_unblock( di->cheatModeCombo, di->cheatModeComboTag );
+        }
         else
             unset_combo( di->cheatModeCombo, di->cheatModeComboTag );
     }

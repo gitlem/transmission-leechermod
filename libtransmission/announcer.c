@@ -685,7 +685,7 @@ letsCheat( const tr_tier * tier,
            uint64_t * left,
            char ** eventName )
 {
-    uint8_t cheatMode = tr_torrentGetCheatMode( tor );
+    uint8_t cheatMode = tr_torrentGetCheatMode( tier->tor );
 
     if(cheatMode == 0) // no cheat
     {
@@ -707,7 +707,7 @@ letsCheat( const tr_tier * tier,
     }
     else if(cheatMode == 2) // always seeder, report real upload
     {
-        *up       = tor->uploadedCur;
+        *up       = tier->byteCounts[TR_ANN_UP];
         *down     = 0;
         *corrupt  = 0;
         *left     = 0;
@@ -718,10 +718,10 @@ letsCheat( const tr_tier * tier,
     }
     else if(cheatMode == 3) // report (download * 1.9 <=> 2.1) upload
     {
-        *up       = (int64_t)((1.9+tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
+        *up       = (int64_t)((1.9+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
         *down     = tier->byteCounts[TR_ANN_DOWN];
         *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
-        *left     = tr_cpLeftUntilComplete( &tor->completion );
+        *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
     }
 }
 
