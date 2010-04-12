@@ -771,7 +771,6 @@ torrentSet( tr_session               * session,
             if( tr_isPriority( tmp ) )
                 tr_torrentSetPriority( tor, tmp );
         if( tr_bencDictFindInt( args_in, "cheatMode", &tmp ) )
-            if( tr_isCheatMode( tmp ) )
                 tr_torrentSetCheatMode( tor, tmp );
         if( !errmsg && tr_bencDictFindList( args_in, "files-unwanted", &files ) )
             errmsg = setFileDLs( tor, FALSE, files );

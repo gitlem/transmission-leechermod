@@ -1114,11 +1114,20 @@ tr_bool  tr_torrentUsesSessionLimits  ( const tr_torrent * );
 *****  Cheat
 ****/
 
-uint8_t tr_isCheatMode( uint8_t mode );
+typedef int8_t tr_cheatMode_t;
 
-void    tr_torrentSetCheatMode( tr_torrent * tor, uint8_t mode );
+enum
+{
+    TR_CHEAT_DEACT     =  0,
+    TR_CHEAT_ALWSEED   =  1, /* always seeder */
+    TR_CHEAT_ALWLEECH  =  2, /* always leecher */
+    TR_CHEAT_2RATIO    =  3, /* report a ratio of ~2 */
+    TR_CHEAT_4RATIO    =  4  /* report a ratio of ~4 */
+};
 
-uint8_t tr_torrentGetCheatMode( const tr_torrent * tor );
+void           tr_torrentSetCheatMode( tr_torrent * tor, tr_cheatMode_t mode );
+
+tr_cheatMode_t tr_torrentGetCheatMode( const tr_torrent * tor );
 
 
 /****

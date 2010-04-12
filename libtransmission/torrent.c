@@ -193,20 +193,12 @@ tr_torrentUsesSessionLimits( const tr_torrent * tor )
 ****
 ***/
 
-uint8_t
-tr_isCheatMode( uint8_t mode ) {
-    if( mode <= 3 )
-        return 1;
-    else
-        return 0;
-}
-
 void
-tr_torrentSetCheatMode( tr_torrent * tor, uint8_t mode )
+tr_torrentSetCheatMode( tr_torrent * tor, tr_cheatMode_t mode )
 {
     assert( tr_isTorrent( tor ) );
 
-    if( mode != tor->cheatMode)
+    if( ( mode >= 0 && mode <= 4 ) && mode != tor->cheatMode )
     {
         tor->cheatMode = mode;
 
@@ -214,7 +206,7 @@ tr_torrentSetCheatMode( tr_torrent * tor, uint8_t mode )
     }
 }
 
-uint8_t
+tr_cheatMode_t
 tr_torrentGetCheatMode( const tr_torrent * tor )
 {
     assert( tr_isTorrent( tor ) );
@@ -707,10 +699,10 @@ torrentInit( tr_torrent * tor, const tr_ctor * ctor )
 
     if( !( loaded & TR_FR_CHEATMODE ) )
     {
-        tr_torrentSetCheatMode( tor, 0 );
+        tr_torrentSetCheatMode( tor, TR_CHEAT_DEACT );
     }
-    // random float, range 0.0 to 0.2
-    tor->cheatRand = (float)tr_cryptoRandInt(200000)/1000000;
+    // random float, range 0.0 to 0.1
+    tor->cheatRand = (float)tr_cryptoRandInt(100000)/1000000;
 
     {
         tr_torrent * it = NULL;

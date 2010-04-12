@@ -272,7 +272,7 @@ Torrent.prototype =
 	},
 	cheatModeChanged: function(event, newvalue) {
 		to = this;
-		if(newvalue >= 0 && newvalue <= 3) {
+		if(newvalue >= 0 && newvalue <= 4) {
 			var o = {
 				method: 'torrent-set',
 				arguments: {

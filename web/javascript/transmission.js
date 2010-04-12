@@ -1229,7 +1229,10 @@ Transmission.prototype =
 					cheat_mode = "Always Seeder, report real up, no down";
 				break;
 				case 3:
-					cheat_mode = "Report real down and up=down*2";
+					cheat_mode = "Report a ratio of ~2";
+				break;
+				case 4:
+					cheat_mode = "Report a ratio of ~4";
 				break;
 				default:
 					cheat_mode = "???";

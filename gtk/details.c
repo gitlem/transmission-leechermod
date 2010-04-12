@@ -272,14 +272,14 @@ refreshOptions( struct DetailsImpl * di, tr_torrent ** torrents, int n )
 
     /* cheatModeCombo */
     if( n ) {
-        const uint8_t baseline = tr_torrentGetCheatMode( torrents[0] );
+        const tr_cheatMode_t baseline = tr_torrentGetCheatMode( torrents[0] );
         int i;
         for( i=1; i<n; ++i)
             if( baseline != tr_torrentGetCheatMode( torrents[i] ) )
                 break;
         if( i == n ) {
             g_signal_handler_block( di->cheatModeCombo, di->cheatModeComboTag );
-            gtr_priority_combo_set_value( di->cheatModeCombo, baseline);
+            gtr_cheatMode_combo_set_value( di->cheatModeCombo, baseline);
             g_signal_handler_unblock( di->cheatModeCombo, di->cheatModeComboTag );
         }
         else
@@ -453,52 +453,15 @@ new_priority_combo( struct DetailsImpl * di )
 static void
 onCheatModeChanged( GtkComboBox * w, struct DetailsImpl * di )
 {
-    GtkTreeIter iter;
-
-    if(gtk_combo_box_get_active_iter( w, &iter )) {
-        int val = 0;
-        gtk_tree_model_get( gtk_combo_box_get_model( w ), &iter, 0, &val, -1 );
-        torrent_set_int( di, "cheatMode", val );
-    }
+    const uint8_t cheatMode = gtr_cheatMode_combo_get_value( GTK_WIDGET( w ) );
+    torrent_set_int( di, "cheatMode", cheatMode );
 }
 
 static GtkWidget*
 new_cheatMode_combo ( struct DetailsImpl * di )
 {
-    guint tag;
-    int i;
-    GtkWidget * w;
-    GtkCellRenderer * r;
-    GtkListStore * store;
-    const struct {
-        uint8_t value;
-        const char * text;
-    } items[] = {
-        { 0, N_("No Cheat (default)") },
-        { 1, N_("Always Leecher, report 0%") },
-        { 2, N_("Always Seeder, report real up, no down") },
-        { 3, N_("Report real down and up=down*2") }
-    };
-
-    store = gtk_list_store_new( 2, G_TYPE_INT, G_TYPE_STRING );
-    for( i=0; i<(int)G_N_ELEMENTS(items); i++) {
-        GtkTreeIter iter;
-        gtk_list_store_append( store, &iter );
-        gtk_list_store_set( store, &iter,
-            0, items[i].value,
-            1, _( items[i].text ),
-            -1
-        );
-    }
-
-    w = gtk_combo_box_new_with_model( GTK_TREE_MODEL( store ) );
-    r = gtk_cell_renderer_text_new( );
-    gtk_cell_layout_pack_start( GTK_CELL_LAYOUT( w ), r, TRUE );
-    gtk_cell_layout_set_attributes( GTK_CELL_LAYOUT( w ), r, "text", 1, NULL );
-    tag = g_signal_connect( w, "changed", G_CALLBACK( onCheatModeChanged ), di );
-    di->cheatModeComboTag = tag;
-
-    g_object_unref( store );
+    GtkWidget * w = gtr_cheatMode_combo_new( );
+    di->cheatModeComboTag = g_signal_connect( w, "changed", G_CALLBACK( onCheatModeChanged ), di );
     return w;
 }
 

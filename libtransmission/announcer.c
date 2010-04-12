@@ -716,9 +716,16 @@ letsCheat( const tr_tier * tier,
             *eventName = 0;
         }
     }
-    else if(cheatMode == 3) // report (download * 1.9 <=> 2.1) upload
+    else if(cheatMode == 3) // report (download * 1.95 <=> 2.05) upload
     {
         *up       = (int64_t)((1.9+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
+        *down     = tier->byteCounts[TR_ANN_DOWN];
+        *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
+        *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
+    }
+    else if(cheatMode == 4) // report (download * 3.95 <=> 4.05) upload
+    {
+        *up       = (int64_t)((3.9+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
         *down     = tier->byteCounts[TR_ANN_DOWN];
         *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
         *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
