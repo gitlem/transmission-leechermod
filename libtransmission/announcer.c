@@ -685,16 +685,16 @@ letsCheat( const tr_tier * tier,
            uint64_t * left,
            char ** eventName )
 {
-    uint8_t cheatMode = tr_torrentGetCheatMode( tier->tor );
+    tr_cheatMode_t cheatMode = tr_torrentGetCheatMode( tier->tor );
 
-    if(cheatMode == 0) // no cheat
+    if(cheatMode == TR_CHEAT_DEACT) // no cheat
     {
         *up       = tier->byteCounts[TR_ANN_UP];
         *down     = tier->byteCounts[TR_ANN_DOWN];
         *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
         *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
     }
-    else if(cheatMode == 1) // always leecher
+    else if(cheatMode == TR_CHEAT_ALWLEECH) // always leecher
     {
         *up       = 0;
         *down     = 0;
@@ -705,7 +705,7 @@ letsCheat( const tr_tier * tier,
             *eventName = 0;
         }
     }
-    else if(cheatMode == 2) // always seeder, report real upload
+    else if(cheatMode == TR_CHEAT_ALWSEED) // always seeder, report real upload
     {
         *up       = tier->byteCounts[TR_ANN_UP];
         *down     = 0;
@@ -716,14 +716,14 @@ letsCheat( const tr_tier * tier,
             *eventName = 0;
         }
     }
-    else if(cheatMode == 3) // report (download * 1.95 <=> 2.05) upload
+    else if(cheatMode == TR_CHEAT_2RATIO) // report (download * 1.95 <=> 2.05) upload
     {
         *up       = (int64_t)((1.9+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
         *down     = tier->byteCounts[TR_ANN_DOWN];
         *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
         *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
     }
-    else if(cheatMode == 4) // report (download * 3.95 <=> 4.05) upload
+    else if(cheatMode == TR_CHEAT_4RATIO) // report (download * 3.95 <=> 4.05) upload
     {
         *up       = (int64_t)((3.9+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
         *down     = tier->byteCounts[TR_ANN_DOWN];

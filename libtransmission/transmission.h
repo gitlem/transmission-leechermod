@@ -1119,8 +1119,8 @@ typedef int8_t tr_cheatMode_t;
 enum
 {
     TR_CHEAT_DEACT     =  0,
-    TR_CHEAT_ALWSEED   =  1, /* always seeder */
-    TR_CHEAT_ALWLEECH  =  2, /* always leecher */
+    TR_CHEAT_ALWLEECH  =  1, /* always seeder */
+    TR_CHEAT_ALWSEED   =  2, /* always leecher */
     TR_CHEAT_2RATIO    =  3, /* report a ratio of ~2 */
     TR_CHEAT_4RATIO    =  4  /* report a ratio of ~4 */
 };
