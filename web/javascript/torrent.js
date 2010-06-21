@@ -42,7 +42,7 @@ Torrent._DynamicFields = [ 'downloadedEver', 'error', 'errorString', 'eta',
     'haveUnchecked', 'haveValid', 'leftUntilDone', 'metadataPercentComplete', 'peersConnected',
     'peersGettingFromUs', 'peersSendingToUs', 'rateDownload', 'rateUpload',
     'recheckProgress', 'sizeWhenDone', 'status', 'trackerStats', 'desiredAvailable',
-    'uploadedEver', 'uploadRatio', 'seedRatioLimit', 'seedRatioMode', 'downloadDir', 'isFinished' ]
+    'uploadedEver', 'uploadRatio', 'seedRatioLimit', 'seedRatioMode', 'downloadDir', 'isFinished', 'cheatMode' ]
 
 Torrent.prototype =
 {
@@ -268,6 +268,25 @@ Torrent.prototype =
 			default:                      return -1;
 		}
 	},
+	cheatMode: function() {
+		return this._cheat_mode;
+	},
+	cheatModeChanged: function(event, newvalue) {
+		to = this;
+		if(newvalue >= 0 && newvalue <= 4) {
+			var o = {
+				method: 'torrent-set',
+				arguments: {
+					ids: this._id,
+					cheatMode: newvalue
+				}
+			};
+
+			this._controller.remote.sendRequest( o, function( data ) {
+				to._controller.refreshTorrents(to._id);
+			});
+		}
+	},
 	
 	/*--------------------------------------------
 	 *
@@ -394,6 +413,7 @@ Torrent.prototype =
 		this._metadataPercentComplete = data.metadataPercentComplete;
 		this._isFinishedSeeding       = data.isFinished;
 		this._desiredAvailable        = data.desiredAvailable;
+		this._cheat_mode              = data.cheatMode;
 
 		if (data.fileStats)
 			this.refreshFileModel( data );

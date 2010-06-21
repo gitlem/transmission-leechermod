@@ -705,6 +705,85 @@ gtr_priority_combo_new( void )
     return w;
 }
 
+void
+gtr_cheatMode_combo_set_value( GtkWidget * w, tr_cheatMode_t value )
+{
+    int i;
+    int currentValue;
+    const int column = 0;
+    GtkTreeIter iter;
+    GtkComboBox * combobox = GTK_COMBO_BOX( w );
+    GtkTreeModel * model = gtk_combo_box_get_model( combobox );
+
+    /* do the value and current value match? */
+    if( gtk_combo_box_get_active_iter( combobox, &iter ) ) {
+        gtk_tree_model_get( model, &iter, column, &currentValue, -1 );
+        if( currentValue == value )
+            return;
+    }
+
+    /* find the one to select */
+    i = 0;
+    while(( gtk_tree_model_iter_nth_child( model, &iter, NULL, i++ ))) {
+        gtk_tree_model_get( model, &iter, column, &currentValue, -1 );
+        if( currentValue == value ) {
+            gtk_combo_box_set_active_iter( combobox, &iter );
+            return;
+        }
+    }
+}
+
+tr_cheatMode_t
+gtr_cheatMode_combo_get_value( GtkWidget * w )
+{
+    int value = 0;
+    GtkTreeIter iter;
+    GtkComboBox * combo_box = GTK_COMBO_BOX( w );
+
+    if( gtk_combo_box_get_active_iter( combo_box, &iter ) )
+        gtk_tree_model_get( gtk_combo_box_get_model( combo_box ), &iter, 0, &value, -1 );
+
+    return value;
+}
+
+GtkWidget *
+gtr_cheatMode_combo_new ( void )
+{
+    int i;
+    GtkWidget * w;
+    GtkCellRenderer * r;
+    GtkListStore * store;
+    const struct {
+        uint8_t value;
+        const char * text;
+    } items[] = {
+        { TR_CHEAT_DEACT,    N_("No Cheat (default)") },
+        { TR_CHEAT_ALWLEECH, N_("Always Leecher, report 0%") },
+        { TR_CHEAT_ALWSEED,  N_("Always Seeder, report real up, no down") },
+        { TR_CHEAT_2RATIO,   N_("Report a ratio of ~2") },
+        { TR_CHEAT_4RATIO,   N_("Report a ratio of ~4") }
+    };
+
+    store = gtk_list_store_new( 2, G_TYPE_INT, G_TYPE_STRING );
+    for( i=0; i<(int)G_N_ELEMENTS(items); i++) {
+        GtkTreeIter iter;
+        gtk_list_store_append( store, &iter );
+        gtk_list_store_set( store, &iter,
+            0, items[i].value,
+            1, _( items[i].text ),
+            -1
+        );
+    }
+
+    w = gtk_combo_box_new_with_model( GTK_TREE_MODEL( store ) );
+    r = gtk_cell_renderer_text_new( );
+    gtk_cell_layout_pack_start( GTK_CELL_LAYOUT( w ), r, TRUE );
+    gtk_cell_layout_set_attributes( GTK_CELL_LAYOUT( w ), r, "text", 1, NULL );
+
+    g_object_unref( store );
+    return w;
+}
+
 /***
 ****
 ***/

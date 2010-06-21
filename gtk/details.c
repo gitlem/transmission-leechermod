@@ -45,6 +45,7 @@ struct DetailsImpl
     GtkWidget * downLimitedCheck;
     GtkWidget * downLimitSpin;
     GtkWidget * bandwidthCombo;
+    GtkWidget * cheatModeCombo;
     GtkWidget * seedGlobalRadio;
     GtkWidget * seedForeverRadio;
     GtkWidget * seedCustomRadio;
@@ -57,6 +58,7 @@ struct DetailsImpl
     guint downLimitSpinTag;
     guint upLimitSpinTag;
     guint bandwidthComboTag;
+    guint cheatModeComboTag;
     guint seedForeverRadioTag;
     guint seedGlobalRadioTag;
     guint seedCustomRadioTag;
@@ -269,6 +271,22 @@ refreshOptions( struct DetailsImpl * di, tr_torrent ** torrents, int n )
             unset_combo( di->bandwidthCombo, di->bandwidthComboTag );
     }
 
+    /* cheatModeCombo */
+    if( n ) {
+        const tr_cheatMode_t baseline = tr_torrentGetCheatMode( torrents[0] );
+        int i;
+        for( i=1; i<n; ++i)
+            if( baseline != tr_torrentGetCheatMode( torrents[i] ) )
+                break;
+        if( i == n ) {
+            g_signal_handler_block( di->cheatModeCombo, di->cheatModeComboTag );
+            gtr_cheatMode_combo_set_value( di->cheatModeCombo, baseline);
+            g_signal_handler_unblock( di->cheatModeCombo, di->cheatModeComboTag );
+        }
+        else
+            unset_combo( di->cheatModeCombo, di->cheatModeComboTag );
+    }
+
     /* seedGlobalRadio */
     /* seedForeverRadio */
     /* seedCustomRadio */
@@ -433,6 +451,20 @@ new_priority_combo( struct DetailsImpl * di )
     return w;
 }
 
+static void
+onCheatModeChanged( GtkComboBox * w, struct DetailsImpl * di )
+{
+    const uint8_t cheatMode = gtr_cheatMode_combo_get_value( GTK_WIDGET( w ) );
+    torrent_set_int( di, "cheatMode", cheatMode );
+}
+
+static GtkWidget*
+new_cheatMode_combo ( struct DetailsImpl * di )
+{
+    GtkWidget * w = gtr_cheatMode_combo_new( );
+    di->cheatModeComboTag = g_signal_connect( w, "changed", G_CALLBACK( onCheatModeChanged ), di );
+    return w;
+}
 
 static GtkWidget*
 options_page_new( struct DetailsImpl * d )
@@ -477,6 +509,16 @@ options_page_new( struct DetailsImpl * d )
     w = new_priority_combo( d );
     hig_workarea_add_row( t, &row, _( "Torrent _priority:" ), w, NULL );
     d->bandwidthCombo = w;
+
+    /**/
+
+    w = new_cheatMode_combo( d );
+    hig_workarea_add_section_divider( t, &row );
+    hig_workarea_add_section_title( t, &row, _( "Cheat" ));
+    hig_workarea_add_row( t, &row, _( "Cheat Mode:" ), w, NULL );
+    d->cheatModeCombo = w;
+
+    /**/
 
     hig_workarea_add_section_divider( t, &row );
     hig_workarea_add_section_title( t, &row, _( "Seed-Until Ratio" ) );

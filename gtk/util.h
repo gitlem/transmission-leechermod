@@ -148,6 +148,12 @@ tr_priority_t gtr_priority_combo_get_value( GtkWidget * w );
 
 GtkWidget * gtr_priority_combo_new( void );
 
+void gtr_cheatMode_combo_set_value( GtkWidget * w, tr_cheatMode_t value );
+
+tr_cheatMode_t gtr_cheatMode_combo_get_value( GtkWidget * w );
+
+GtkWidget * gtr_cheatMode_combo_new( void );
+
 /***
 ****
 ***/
