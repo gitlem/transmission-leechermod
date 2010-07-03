@@ -752,14 +752,14 @@ letsCheat( const tr_tier * tier,
     }
     else if(cheatMode == TR_CHEAT_2RATIO) // report (download * 1.95 <=> 2.05) upload
     {
-        *up       = (int64_t)((1.9+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
+        *up       = (int64_t)((1.95+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
         *down     = tier->byteCounts[TR_ANN_DOWN];
         *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
         *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
     }
     else if(cheatMode == TR_CHEAT_4RATIO) // report (download * 3.95 <=> 4.05) upload
     {
-        *up       = (int64_t)((3.9+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
+        *up       = (int64_t)((3.95+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
         *down     = tier->byteCounts[TR_ANN_DOWN];
         *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
         *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
