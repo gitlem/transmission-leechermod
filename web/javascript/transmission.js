@@ -1599,7 +1599,15 @@ Transmission.prototype =
 				removedAny = true;
 				var e = torrent.element();
 				if( e ) {
-					var row_index = tr.getTorrentIndex(tr._rows, torrent);
+					var row_index;
+					for( var i=0, row; row = tr._rows[i]; ++i ) {
+						if( row._id == torrent._id )
+						{
+							row_index = i;
+							e = tr._rows[row_index];
+							break;
+						}
+					}
 					delete e._torrent; //remove circular refernce to help IE garbage collect
 					tr._rows.splice(row_index, 1)
 					e.remove();

@@ -11,6 +11,7 @@
  */
 
 #include <assert.h>
+#include <limits.h> /* INT_MAX */
 #include <string.h> /* memcpy, memcmp, strstr */
 #include <stdlib.h> /* qsort */
 
@@ -62,7 +63,7 @@ enum
 
     /* max number of peers to ask for per second overall.
     * this throttle is to avoid overloading the router */
-    MAX_CONNECTIONS_PER_SECOND = 8,
+    MAX_CONNECTIONS_PER_SECOND = 12,
 
     MAX_CONNECTIONS_PER_PULSE = (int)(MAX_CONNECTIONS_PER_SECOND * (RECONNECT_PERIOD_MSEC/1000.0)),
 
@@ -2498,30 +2499,41 @@ rechokeDownloads( Torrent * t )
     /* separate the peers into "good" (ones with a low cancel-to-block ratio),
      * untested peers, and "bad" (ones with a high cancel-to-block ratio).
      * That's the order in which we'll choose who to show interest in */
-    for( i=0; i<peerCount; ++i )
     {
-        tr_peer * peer = tr_ptrArrayNth( &t->peers, i );
+        /* Randomize the peer array so the peers in the three groups will be unsorted... */
+        int n = peerCount;
+        tr_peer ** peers = tr_memdup( tr_ptrArrayBase( &t->peers ), n * sizeof( tr_peer * ) );
 
-        if( !isPeerInteresting( t->tor, peer ) )
+        while( n > 0 )
         {
-            tr_peerMsgsSetInterested( peer->msgs, FALSE );
-        }
-        else
-        {
-            const int blocks = tr_historyGet( peer->blocksSentToClient, now, msec );
-            const int cancels = tr_historyGet( peer->cancelsSentToPeer, now, msec );
+            const int i = tr_cryptoWeakRandInt( n );
+            tr_peer * peer = tr_ptrArrayNth( &t->peers, i );
 
-            if( !blocks && !cancels )
-                untested[untestedCount++] = peer;
-            else if( !cancels )
-                good[goodCount++] = peer;
-            else if( !blocks )
-                bad[badCount++] = peer;
-            else if( ( cancels * 10 ) < blocks )
-                good[goodCount++] = peer;
+            if( !isPeerInteresting( t->tor, peer ) )
+            {
+                tr_peerMsgsSetInterested( peer->msgs, FALSE );
+            }
             else
-                bad[badCount++] = peer;
+            {
+                const int blocks = tr_historyGet( peer->blocksSentToClient, now, msec );
+                const int cancels = tr_historyGet( peer->cancelsSentToPeer, now, msec );
+
+                if( !blocks && !cancels )
+                    untested[untestedCount++] = peer;
+                else if( !cancels )
+                    good[goodCount++] = peer;
+                else if( !blocks )
+                    bad[badCount++] = peer;
+                else if( ( cancels * 10 ) < blocks )
+                    good[goodCount++] = peer;
+                else
+                    bad[badCount++] = peer;
+            }
+
+            tr_removeElementFromArray( peers, i, sizeof(tr_peer*), n-- );
         }
+
+        tr_free( peers );
     }
 
     t->interestedCount = 0;
@@ -2566,6 +2578,7 @@ struct ChokeData
     tr_bool         isInterested;
     tr_bool         isChoked;
     int             rate;
+    int             salt;
     tr_peer *       peer;
 };
 
@@ -2581,6 +2594,9 @@ compareChoke( const void * va,
 
     if( a->isChoked != b->isChoked ) /* prefer unchoked */
         return a->isChoked ? 1 : -1;
+
+    if( a->salt != b->salt ) /* random order */
+        return a->salt - b->salt;
 
     return 0;
 }
@@ -2629,6 +2645,7 @@ rechokeUploads( Torrent * t, const uint64_t now )
             n->isInterested = peer->peerIsInterested;
             n->isChoked     = peer->peerIsChoked;
             n->rate         = tr_peerGetPieceSpeed( peer, now, TR_CLIENT_TO_PEER ) * 1024;
+            n->salt         = tr_cryptoWeakRandInt( INT_MAX );
         }
     }
 
@@ -3131,10 +3148,11 @@ bandwidthPulse( int foo UNUSED, short bar UNUSED, void * vmgr )
         }
     }
 
-    /* possibly stop torrents that have an error */
+    /* stop torrents that are ready to stop, but couldn't be stopped earlier
+    * during the peer-io callback call chain */
     tor = NULL;
     while(( tor = tr_torrentNext( mgr->session, tor )))
-        if( tor->isRunning && ( tor->error == TR_STAT_LOCAL_ERROR ))
+        if( tor->isStopping )
             tr_torrentStop( tor );
 
     reconnectPulse( 0, 0, mgr );
@@ -3354,6 +3372,10 @@ getPeerCandidateScore( const tr_torrent * tor, const struct peer_atom * atom, ui
 
     /* prefer recently-started torrents */
     i = torrentWasRecentlyStarted( tor ) ? 0 : 1;
+    score = addValToKey( score, 1, i );
+
+    /* prefer torrents we're downloading with */
+    i = tr_torrentIsSeed( tor ) ? 1 : 0;
     score = addValToKey( score, 1, i );
 
     /* prefer peers that we might have a chance of uploading to...

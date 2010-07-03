@@ -207,7 +207,17 @@ void
 Details :: onTimer( )
 {
     if( !myIds.empty( ) )
+    {
+        QSet<int> infos;
+        foreach( int id, myIds ) {
+            const Torrent * tor = myModel.getTorrentFromId( id );
+            if( tor->isMagnet() )
+                infos.insert( tor->id() );
+        }
+        if( !infos.isEmpty() )
+            mySession.initTorrents( infos );
         mySession.refreshExtraStats( myIds );
+    }
 }
 
 void
@@ -813,15 +823,7 @@ Details :: refresh( )
                 newItems << item;
             }
 
-            QString code;
-            if( peer.isDownloadingFrom )                           { code += 'D'; }
-            else if( peer.clientIsInterested )                     { code += 'd'; }
-            if( peer.isUploadingTo )                               { code += 'U'; }
-            else if( peer.peerIsInterested )                       { code += 'u'; }
-            if( !peer.clientIsChoked && !peer.clientIsInterested ) { code += 'K'; }
-            if( !peer.peerIsChoked && !peer.peerIsInterested )     { code += '?'; }
-            if( peer.isEncrypted )                                 { code += 'E'; }
-            if( peer.isIncoming )                                  { code += 'I'; }
+            const QString code = peer.flagStr;
             item->setStatus( code );
             item->refresh( peer );
 
@@ -837,6 +839,7 @@ Details :: refresh( )
                     case 'K': txt = tr( "Peer has unchoked us, but we're not interested" ); break;
                     case '?': txt = tr( "We unchoked this peer, but they're not interested" ); break;
                     case 'E': txt = tr( "Encrypted connection" ); break;
+                    case 'H': txt = tr( "Peer was discovered through DHT" ); break;
                     case 'X': txt = tr( "Peer was discovered through Peer Exchange (PEX)" ); break;
                     case 'I': txt = tr( "Peer is an incoming connection" ); break;
                 }
@@ -914,6 +917,7 @@ Details :: createInfoTab( )
     hig->addRow( tr( "Hash:" ), myHashLabel = new SqueezeLabel );
     hig->addRow( tr( "Privacy:" ), myPrivacyLabel = new SqueezeLabel );
     hig->addRow( tr( "Origin:" ), myOriginLabel = new SqueezeLabel );
+    myOriginLabel->setMinimumWidth( 325 ); // stop long origin strings from resizing the widgit
     hig->addRow( tr( "Comment:" ), myCommentBrowser = new QTextBrowser );
     const int h = QFontMetrics(myCommentBrowser->font()).lineSpacing() * 4;
     myCommentBrowser->setFixedHeight( h );
