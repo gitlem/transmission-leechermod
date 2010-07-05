@@ -96,6 +96,7 @@ class Details: public QDialog
         QDoubleSpinBox * mySeedCustomSpin;
         QSpinBox * myPeerLimitSpin;
         QComboBox * myBandwidthPriorityCombo;
+        QComboBox * myCheatModeCombo;
 
         QLabel * mySizeLabel;
         QLabel * myHashLabel;
@@ -122,6 +123,7 @@ class Details: public QDialog
         FileTreeView * myFileTreeView;
 
     private slots:
+        void onCheatModeChanged( int );
         void onBandwidthPriorityChanged( int );
         void onFilePriorityChanged( const QSet<int>& fileIndices, int );
         void onFileWantedChanged( const QSet<int>& fileIndices, bool );

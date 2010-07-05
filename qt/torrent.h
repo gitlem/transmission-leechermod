@@ -168,6 +168,7 @@ class Torrent: public QObject
             PEERS,
             TORRENT_FILE,
             BANDWIDTH_PRIORITY,
+            CHEAT_MODE,
 
             PROPERTY_COUNT
         };
@@ -231,6 +232,7 @@ class Torrent: public QObject
         bool setDateTime   ( int key, const QDateTime& );
 
     public:
+        int getCheatMode( ) const { return getInt( CHEAT_MODE ); }
         int getBandwidthPriority( ) const { return getInt( BANDWIDTH_PRIORITY ); }
         int id( ) const { return getInt( ID ); }
         QString name( ) const { return getString( NAME ); }

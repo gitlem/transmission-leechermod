@@ -618,6 +618,18 @@ Details :: refresh( )
         myBandwidthPriorityCombo->setCurrentIndex( i );
         myBandwidthPriorityCombo->blockSignals( false );
 
+        // myCheatModeCombo
+        uniform = true;
+        baselineInt = baseline->getCheatMode( );
+        foreach( tor, torrents ) if ( baselineInt != tor->getCheatMode( ) ) { uniform = false; break; }
+        if( uniform )
+            i = myCheatModeCombo->findData( baselineInt );
+        else
+            i = -1;
+        myCheatModeCombo->blockSignals( true );
+        myCheatModeCombo->setCurrentIndex( i );
+        myCheatModeCombo->blockSignals( false );
+ 
         mySingleDownSpin->blockSignals( true );
         mySingleDownSpin->setValue( int(tor->downloadLimit().kbps()) );
         mySingleDownSpin->blockSignals( false );
@@ -1009,6 +1021,16 @@ Details :: onBandwidthPriorityChanged( int index )
     }
 }
 
+void
+Details :: onCheatModeChanged( int index )
+{
+    if( index != -1 )
+    {
+        const int priority = myCheatModeCombo->itemData(index).toInt( );
+        mySession.torrentSet( myIds, "cheatMode", priority );
+    }
+}
+
 QWidget *
 Details :: createOptionsTab( )
 {
@@ -1055,6 +1077,19 @@ Details :: createOptionsTab( )
     connect( m, SIGNAL(currentIndexChanged(int)), this, SLOT(onBandwidthPriorityChanged(int)));
     hig->addRow( tr( "Torrent &priority:" ), m );
     myBandwidthPriorityCombo = m;
+
+    hig->addSectionDivider( );
+    hig->addSectionTitle( tr( "Cheat" ) );
+
+    m = new QComboBox;
+    m->addItem( tr( "No Cheat" ),                               TR_CHEAT_DEACT );
+    m->addItem( tr( "Always Leecher, report 0%" ),              TR_CHEAT_ALWLEECH );
+    m->addItem( tr( "Always Seeder, report real up, no down" ), TR_CHEAT_ALWSEED );
+    m->addItem( tr( "Report a ratio of ~2" ),                   TR_CHEAT_2RATIO );
+    m->addItem( tr( "Report a ratio of ~4" ),                   TR_CHEAT_4RATIO );
+    connect( m, SIGNAL(currentIndexChanged(int)), this, SLOT(onCheatModeChanged(int)));
+    hig->addRow( tr( "Cheat Mode:" ), m );
+    myCheatModeCombo = m;
 
     hig->addSectionDivider( );
     hig->addSectionTitle( tr( "Seed-Until Ratio" ) );

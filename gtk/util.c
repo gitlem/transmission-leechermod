@@ -757,7 +757,7 @@ gtr_cheatMode_combo_new ( void )
         uint8_t value;
         const char * text;
     } items[] = {
-        { TR_CHEAT_DEACT,    N_("No Cheat (default)") },
+        { TR_CHEAT_DEACT,    N_("No Cheat") },
         { TR_CHEAT_ALWLEECH, N_("Always Leecher, report 0%") },
         { TR_CHEAT_ALWSEED,  N_("Always Seeder, report real up, no down") },
         { TR_CHEAT_2RATIO,   N_("Report a ratio of ~2") },
