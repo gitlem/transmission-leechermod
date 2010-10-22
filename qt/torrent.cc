@@ -107,7 +107,8 @@ Torrent :: myProperties[] =
     { MANUAL_ANNOUNCE_TIME, "manualAnnounceTime", QVariant::DateTime, STAT_EXTRA },
     { PEERS, "peers", TrTypes::PeerList, STAT_EXTRA },
     { TORRENT_FILE, "torrentFile", QVariant::String, STAT_EXTRA },
-    { BANDWIDTH_PRIORITY, "bandwidthPriority", QVariant::Int, STAT_EXTRA }
+    { BANDWIDTH_PRIORITY, "bandwidthPriority", QVariant::Int, STAT_EXTRA },
+    { CHEAT_MODE, "cheatMode", QVariant::Int, STAT_EXTRA }
 };
 
 Torrent :: KeyList

@@ -40,6 +40,7 @@ struct DetailsImpl
     GtkWidget * down_limited_check;
     GtkWidget * down_limit_spin;
     GtkWidget * bandwidth_combo;
+    GtkWidget * cheatMode_combo;
 
     GtkWidget * ratio_combo;
     GtkWidget * ratio_spin;
@@ -53,6 +54,7 @@ struct DetailsImpl
     guint down_limit_spin_tag;
     guint up_limit_spin_tag;
     guint bandwidth_combo_tag;
+    guint cheatMode_combo_tag;
     guint ratio_combo_tag;
     guint ratio_spin_tag;
     guint idle_combo_tag;
@@ -264,6 +266,23 @@ refreshOptions( struct DetailsImpl * di, tr_torrent ** torrents, int n )
             unset_combo( di->bandwidth_combo, di->bandwidth_combo_tag );
     }
 
+    /* cheatMode_combo */
+    if( n ) {
+        const tr_cheatMode_t baseline = tr_torrentGetCheatMode( torrents[0] );
+        int i;
+        for( i=1; i<n; ++i )
+            if( baseline != tr_torrentGetCheatMode( torrents[i] ) )
+                break;
+        if( i == n ) {
+            GtkWidget * w = di->cheatMode_combo;
+            g_signal_handler_block( di->cheatMode_combo, di->cheatMode_combo_tag );
+            gtr_cheatMode_combo_set_value( GTK_COMBO_BOX( w ), baseline);
+            g_signal_handler_unblock( di->cheatMode_combo, di->cheatMode_combo_tag );
+        }
+        else
+            unset_combo( di->cheatMode_combo, di->cheatMode_combo_tag );
+    }
+
     /* ratio_combo */
     /* ratio_spin */
     if( n ) {
@@ -433,6 +452,21 @@ new_priority_combo( struct DetailsImpl * di )
     return w;
 }
 
+static void
+onCheatModeChanged( GtkComboBox * combo_box, struct DetailsImpl * di )
+{
+    const tr_cheatMode_t cheatMode = gtr_cheatMode_combo_get_value( combo_box );
+    torrent_set_int( di, "cheatMode", cheatMode );
+}
+
+static GtkWidget*
+new_cheatMode_combo ( struct DetailsImpl * di )
+{
+    GtkWidget * w = gtr_cheatMode_combo_new( );
+    di->cheatMode_combo_tag = g_signal_connect( w, "changed", G_CALLBACK( onCheatModeChanged ), di );
+    return w;
+}
+
 static void refresh( struct DetailsImpl * di );
 
 #define ARG_KEY "arg-key"
@@ -512,6 +546,16 @@ options_page_new( struct DetailsImpl * d )
     w = new_priority_combo( d );
     hig_workarea_add_row( t, &row, _( "Torrent _priority:" ), w, NULL );
     d->bandwidth_combo = w;
+
+    /**/
+
+    w = new_cheatMode_combo( d );
+    hig_workarea_add_section_divider( t, &row );
+    hig_workarea_add_section_title( t, &row, _( "Cheat" ));
+    hig_workarea_add_row( t, &row, _( "Cheat Mode:" ), w, NULL );
+    d->cheatMode_combo = w;
+
+    /**/
 
     hig_workarea_add_section_divider( t, &row );
     hig_workarea_add_section_title( t, &row, _( "Seeding Limits" ) );

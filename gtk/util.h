@@ -161,6 +161,10 @@ GtkWidget * gtr_priority_combo_new( void );
 #define gtr_priority_combo_get_value(w)     gtr_combo_box_get_active_enum(w)
 #define gtr_priority_combo_set_value(w,val) gtr_combo_box_set_active_enum(w,val)
 
+GtkWidget * gtr_cheatMode_combo_new( void );
+#define gtr_cheatMode_combo_get_value(w)      gtr_combo_box_get_active_enum(w)
+#define gtr_cheatMode_combo_set_value(w, val) gtr_combo_box_set_active_enum(w,val)
+
 GtkWidget * gtr_combo_box_new_enum        ( const char * text_1, ... );
 int         gtr_combo_box_get_active_enum ( GtkComboBox * );
 void        gtr_combo_box_set_active_enum ( GtkComboBox *, int value );

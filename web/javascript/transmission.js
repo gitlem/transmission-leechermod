@@ -93,6 +93,7 @@ Transmission.prototype =
 		var ti = '#torrent_inspector_';
 		this._inspector = { };
 		this._inspector._info_tab = { };
+		this._inspector._info_tab.cheat_mode = $(ti+'cheat_mode')[0];
 		this._inspector._info_tab.availability = $(ti+'availability')[0];
 		this._inspector._info_tab.comment = $(ti+'comment')[0];
 		this._inspector._info_tab.creator_date = $(ti+'creator_date')[0];
@@ -315,7 +316,18 @@ Transmission.prototype =
 				if(!closestRow.isSelected())
 					tr.setSelectedTorrent( closestRow, true );
 				return true;
+			},
+			onShowMenu:        function(e, menu) {
+				cheatMode = tr.getSelectedTorrents()[0].cheatMode();
+				option = $('#cheatModeSelect option[value='+cheatMode+']', menu);
+				if(typeof option.attr == 'function')
+					option.attr("selected", "selected");
+				return menu;
 			}
+		});
+		$('#cheatModeSelect').change(function(e) {
+			selectedTorrent = tr.getSelectedTorrents()[0];
+			selectedTorrent.cheatModeChanged(e, e.target.selectedIndex);
 		});
 	},
 
@@ -1222,6 +1234,7 @@ Transmission.prototype =
 		var date_created = 'N/A';
 		var error = 'None';
 		var hash = 'N/A';
+		var cheat_mode = 'N/A';
 		var have_public = false;
 		var have_private = false;
 		var name;
@@ -1250,6 +1263,7 @@ Transmission.prototype =
 			setInnerHTML( tab.name, 'No Selection' );
 			setInnerHTML( tab.size, na );
 			setInnerHTML( tab.pieces, na );
+			setInnerHTML( tab.cheat_mode, na );
 			setInnerHTML( tab.hash, na );
 			setInnerHTML( tab.state, na );
 			setInnerHTML( tab.download_speed, na );
@@ -1294,6 +1308,25 @@ Transmission.prototype =
 
 			hash = t.hash();
 			pieces = [ t._pieceCount, 'pieces @', Transmission.fmt.mem(t._pieceSize) ].join(' ');
+			switch( t.cheatMode() ) {
+				case 0:
+					cheat_mode = "No Cheat (default)";
+				break;
+				case 1:
+					cheat_mode = "Always Leecher, report 0%";
+				break;
+				case 2:
+					cheat_mode = "Always Seeder, report real up, no down";
+				break;
+				case 3:
+					cheat_mode = "Report a ratio of ~2";
+				break;
+				case 4:
+					cheat_mode = "Report a ratio of ~4";
+				break;
+				default:
+					cheat_mode = "???";
+			}
 			date_created = Transmission.fmt.timestamp( t._creator_date );
 		}
 

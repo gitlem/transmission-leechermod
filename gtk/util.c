@@ -699,6 +699,17 @@ gtr_priority_combo_new( void )
                                    NULL );
 }
 
+GtkWidget *
+gtr_cheatMode_combo_new( void )
+{
+    return gtr_combo_box_new_enum( _("No Cheat"), TR_CHEAT_DEACT,
+                                   _("Always Leecher, report 0%"), TR_CHEAT_ALWLEECH,
+                                   _("Always Seeder, report real up, no down"), TR_CHEAT_ALWSEED,
+                                   _("Report a ratio of ~2"), TR_CHEAT_2RATIO,
+                                   _("Report a ratio of ~4"), TR_CHEAT_4RATIO,
+                                   NULL );
+}
+
 /***
 ****
 ***/

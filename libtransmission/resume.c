@@ -46,6 +46,7 @@
 #define KEY_RATIOLIMIT          "ratio-limit"
 #define KEY_IDLELIMIT           "idle-limit"
 #define KEY_UPLOADED            "uploaded"
+#define KEY_CHEATMODE           "cheat-mode"
 
 #define KEY_SPEED_KiBps            "speed"
 #define KEY_SPEED_Bps              "speed-Bps"
@@ -302,6 +303,13 @@ saveIdleLimits( tr_benc * dict, const tr_torrent * tor )
 }
 
 static void
+saveCheatMode( tr_benc * dict, const tr_torrent * tor )
+{
+    tr_bencDictReserve( dict, 1 );
+    tr_bencDictAddInt( dict, KEY_CHEATMODE, tr_torrentGetCheatMode( tor ) );
+}
+
+static void
 loadSingleSpeedLimit( tr_benc * d, tr_direction dir, tr_torrent * tor )
 {
     int64_t i;
@@ -402,6 +410,21 @@ loadIdleLimits( tr_benc *    dict,
         if( tr_bencDictFindInt( d, KEY_IDLELIMIT_MODE, &i ) )
             tr_torrentSetIdleMode( tor, i );
       ret = TR_FR_IDLELIMIT;
+    }
+
+    return ret;
+}
+
+static uint64_t
+loadCheatMode( tr_benc * dict, tr_torrent * tor)
+{
+    uint64_t ret = 0;
+    int64_t val;
+
+    if( tr_bencDictFindInt( dict, KEY_CHEATMODE, &val ) )
+    {
+        tr_torrentSetCheatMode( tor, (uint8_t) val );
+        ret = TR_FR_CHEATMODE;
     }
 
     return ret;
@@ -571,6 +594,7 @@ tr_torrentSaveResume( tr_torrent * tor )
     saveSpeedLimits( &top, tor );
     saveRatioLimits( &top, tor );
     saveIdleLimits( &top, tor );
+    saveCheatMode( &top, tor );
 
     filename = getResumeFilename( tor );
     if(( err = tr_bencToFile( &top, TR_FMT_BENC, filename )))
@@ -708,6 +732,9 @@ loadFromFile( tr_torrent * tor,
 
     if( fieldsToLoad & TR_FR_IDLELIMIT )
         fieldsLoaded |= loadIdleLimits( &top, tor );
+
+    if( fieldsToLoad & TR_FR_CHEATMODE )
+        fieldsLoaded |= loadCheatMode( &top, tor );
 
     /* loading the resume file triggers of a lot of changes,
      * but none of them needs to trigger a re-saving of the
