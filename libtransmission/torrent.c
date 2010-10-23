@@ -227,7 +227,7 @@ tr_torrentSetCheatMode( tr_torrent * tor, tr_cheatMode_t mode )
 {
     assert( tr_isTorrent( tor ) );
 
-    if( ( mode >= 0 && mode <= 4 ) && mode != tor->cheatMode )
+    if( ( mode >= TR_CHEAT_DEACT && mode < TR_CHEAT_COUNT ) && mode != tor->cheatMode )
     {
         tor->cheatMode = mode;
 
