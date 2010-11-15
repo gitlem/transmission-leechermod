@@ -77,8 +77,8 @@ enum
 ***/
 
 static int
-compareTransfer( uint32_t a_uploaded, uint32_t a_downloaded,
-                 uint32_t b_uploaded, uint32_t b_downloaded )
+compareTransfer( uint64_t a_uploaded, uint64_t a_downloaded,
+                 uint64_t b_uploaded, uint64_t b_downloaded )
 {
     /* higher upload count goes first */
     if( a_uploaded != b_uploaded )
@@ -172,8 +172,8 @@ struct stop_message
 {
     tr_host * host;
     char * url;
-    uint32_t up;
-    uint32_t down;
+    uint64_t up;
+    uint64_t down;
 };
 
 static void
@@ -315,7 +315,7 @@ typedef struct
      * to verify us if our IP address changes.
      * This is immutable for the life of the tracker object.
      * The +1 is for '\0' */
-    char key_param[KEYLEN + 1];
+    unsigned char key_param[KEYLEN + 1];
 }
 tr_tracker_item;
 
@@ -334,15 +334,16 @@ trackerItemCopyAttributes( tr_tracker_item * t, const tr_tracker_item * o )
 }
 
 static void
-generateKeyParam( char * msg, size_t msglen )
+generateKeyParam( unsigned char * msg, size_t msglen )
 {
     size_t i;
     const char * pool = "abcdefghijklmnopqrstuvwxyz0123456789";
     const int poolSize = 36;
 
+    tr_cryptoRandBuf( msg, msglen );
     for( i=0; i<msglen; ++i )
-        *msg++ = pool[tr_cryptoRandInt( poolSize )];
-    *msg = '\0';
+        msg[i] = pool[ msg[i] % poolSize ];
+    msg[msglen] = '\0';
 }
 
 static tr_tracker_item*
@@ -385,7 +386,7 @@ typedef struct
 {
     /* number of up/down/corrupt bytes since the last time we sent an
      * "event=stopped" message that was acknowledged by the tracker */
-    uint32_t byteCounts[3];
+    uint64_t byteCounts[3];
 
     tr_ptrArray trackers; /* tr_tracker_item */
     tr_tracker_item * currentTracker;
@@ -793,8 +794,8 @@ createAnnounceURL( const tr_announcer     * announcer,
                               "info_hash=%s"
                               "&peer_id=%s"
                               "&port=%d"
-                              "&uploaded=%" PRIu32
-                              "&downloaded=%" PRIu32
+                              "&uploaded=%" PRIu64
+                              "&downloaded=%" PRIu64
                               "&left=%" PRIu64
                               "&numwant=%d"
                               "&key=%s"
@@ -815,7 +816,7 @@ createAnnounceURL( const tr_announcer     * announcer,
         evbuffer_add_printf( buf, "&requirecrypto=1" );
 
     if( corrupt )
-        evbuffer_add_printf( buf, "&corrupt=%" PRIu32, corrupt );
+        evbuffer_add_printf( buf, "&corrupt=%" PRIu64, corrupt );
 
     str = eventName;
     if( str && *str )
@@ -853,14 +854,6 @@ createAnnounceURL( const tr_announcer     * announcer,
 ****
 ***/
 
-static tr_bool
-announceURLIsSupported( const char * announce )
-{
-    return ( announce != NULL )
-        && ( ( strstr( announce, "http://" ) == announce ) ||
-             ( strstr( announce, "https://" ) == announce ) );
-}
-
 static void
 addTorrentToTier( tr_announcer * announcer, tr_torrent_tiers * tiers, tr_torrent * tor )
 {
@@ -872,7 +865,7 @@ addTorrentToTier( tr_announcer * announcer, tr_torrent_tiers * tiers, tr_torrent
     /* get the trackers that we support... */
     infos = tr_new0( const tr_tracker_info*, trackerCount );
     for( i=n=0; i<trackerCount; ++i )
-        if( announceURLIsSupported( trackers[i].announce ) )
+        if( tr_urlIsValidTracker( trackers[i].announce ) )
             infos[n++] = &trackers[i];
 
     /* build our private table of tiers... */

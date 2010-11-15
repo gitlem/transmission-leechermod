@@ -55,11 +55,14 @@ BlocklistScheduler * fScheduler = nil;
     
     [self cancelSchedule];
     
-    if (![[NSUserDefaults standardUserDefaults] boolForKey: @"Blocklist"]
+    NSString * blocklistURL;
+    if (![[NSUserDefaults standardUserDefaults] boolForKey: @"BlocklistNew"]
+        || !((blocklistURL = [[NSUserDefaults standardUserDefaults] stringForKey: @"BlocklistURL"]) &&
+                ![blocklistURL isEqualToString: @""])
         || ![[NSUserDefaults standardUserDefaults] boolForKey: @"BlocklistAutoUpdate"])
         return;
     
-    NSDate * lastUpdateDate = [[NSUserDefaults standardUserDefaults] objectForKey: @"BlocklistLastUpdate"];
+    NSDate * lastUpdateDate = [[NSUserDefaults standardUserDefaults] objectForKey: @"BlocklistNewLastUpdate"];
     if (lastUpdateDate)
         lastUpdateDate = [lastUpdateDate dateByAddingTimeInterval: FULL_WAIT];
     NSDate * closeDate = [NSDate dateWithTimeIntervalSinceNow: SMALL_DELAY];

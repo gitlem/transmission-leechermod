@@ -100,14 +100,15 @@ get_current_session_id( struct tr_rpc_server * server )
         const int n = 48;
         const char * pool = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const size_t pool_size = strlen( pool );
-        char * buf = tr_new( char, n+1 );
+        unsigned char * buf = tr_new( unsigned char, n+1 );
 
+        tr_cryptoRandBuf( buf, n );
         for( i=0; i<n; ++i )
-            buf[i] = pool[ tr_cryptoRandInt( pool_size ) ];
+            buf[i] = pool[ buf[i] % pool_size ];
         buf[n] = '\0';
 
         tr_free( server->sessionId );
-        server->sessionId = buf;
+        server->sessionId = (char*) buf;
         server->sessionIdExpiresAt = now + (60*60); /* expire in an hour */
     }
 
@@ -385,7 +386,7 @@ add_response( struct evhttp_request * req,
             EVBUFFER_LENGTH( out ) = content_len - server->stream.avail_out;
 
 #if 0
-            fprintf( stderr, "compressed response is %.2f of original (raw==%zu bytes; compressed==%zu)\n", 
+            fprintf( stderr, "compressed response is %.2f of original (raw==%zu bytes; compressed==%zu)\n",
                              (double)EVBUFFER_LENGTH(out)/content_len,
                              content_len, EVBUFFER_LENGTH(out) );
 #endif

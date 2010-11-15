@@ -98,11 +98,12 @@ didWriteWrapper( tr_peerIo * io, unsigned int bytes_transferred )
 
         const unsigned int payload = MIN( next->length, bytes_transferred );
         const unsigned int overhead = guessPacketOverhead( payload );
+        const uint64_t now = tr_time_msec( );
 
-        tr_bandwidthUsed( &io->bandwidth, TR_UP, payload, next->isPieceData );
+        tr_bandwidthUsed( &io->bandwidth, TR_UP, payload, next->isPieceData, now );
 
         if( overhead > 0 )
-            tr_bandwidthUsed( &io->bandwidth, TR_UP, overhead, FALSE );
+            tr_bandwidthUsed( &io->bandwidth, TR_UP, overhead, FALSE, now );
 
         if( io->didWrite )
             io->didWrite( io, payload, next->isPieceData, io->userData );
@@ -149,11 +150,16 @@ canReadWrapper( tr_peerIo * io )
 
             assert( tr_isPeerIo( io ) );
 
-            if( piece )
-                tr_bandwidthUsed( &io->bandwidth, TR_DOWN, piece, TRUE );
+            if( piece || (piece!=used) )
+            {
+                const uint64_t now = tr_time_msec( );
 
-            if( used != piece )
-                tr_bandwidthUsed( &io->bandwidth, TR_DOWN, used - piece, FALSE );
+                if( piece )
+                    tr_bandwidthUsed( &io->bandwidth, TR_DOWN, piece, TRUE, now );
+
+                if( used != piece )
+                    tr_bandwidthUsed( &io->bandwidth, TR_DOWN, used - piece, FALSE, now );
+            }
 
             switch( ret )
             {
@@ -254,7 +260,7 @@ event_read_cb( int fd, short event UNUSED, void * vio )
             what |= EVBUFFER_ERROR;
         }
 
-        tr_net_strerror( errstr, sizeof( errstr ), e ); 
+        tr_net_strerror( errstr, sizeof( errstr ), e );
         dbgmsg( io, "event_read_cb got an error. res is %d, what is %hd, errno is %d (%s)", res, what, e, errstr );
 
         if( io->gotError != NULL )
@@ -394,7 +400,7 @@ tr_peerIoNew( tr_session       * session,
         tr_netSetTOS( socket, session->peerSocketTOS );
         maybeSetCongestionAlgorithm( socket, session->peer_congestion_algorithm );
     }
-    
+
     io = tr_new0( tr_peerIo, 1 );
     io->magicNumber = MAGIC_NUMBER;
     io->refCount = 1;
@@ -939,7 +945,7 @@ tr_peerIoTryRead( tr_peerIo * io, size_t howmuch )
             short what = EVBUFFER_READ | EVBUFFER_ERROR;
             if( res == 0 )
                 what |= EVBUFFER_EOF;
-            tr_net_strerror( errstr, sizeof( errstr ), e ); 
+            tr_net_strerror( errstr, sizeof( errstr ), e );
             dbgmsg( io, "tr_peerIoTryRead got an error. res is %d, what is %hd, errno is %d (%s)", res, what, e, errstr );
             io->gotError( io, what, io->userData );
         }
@@ -968,7 +974,7 @@ tr_peerIoTryWrite( tr_peerIo * io, size_t howmuch )
             char errstr[512];
             const short what = EVBUFFER_WRITE | EVBUFFER_ERROR;
 
-            tr_net_strerror( errstr, sizeof( errstr ), e ); 
+            tr_net_strerror( errstr, sizeof( errstr ), e );
             dbgmsg( io, "tr_peerIoTryWrite got an error. res is %d, what is %hd, errno is %d (%s)", n, what, e, errstr );
 
             if( io->gotError != NULL )

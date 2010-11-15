@@ -124,14 +124,6 @@ sockoptfunction( void * vtask, curl_socket_t fd, curlsocktype purpose UNUSED )
 }
 #endif
 
-static int
-getCurlProxyType( tr_proxy_type t )
-{
-    if( t == TR_PROXY_SOCKS4 ) return CURLPROXY_SOCKS4;
-    if( t == TR_PROXY_SOCKS5 ) return CURLPROXY_SOCKS5;
-    return CURLPROXY_HTTP;
-}
-
 static long
 getTimeoutFromURL( const struct tr_web_task * task )
 {
@@ -152,25 +144,10 @@ createEasy( tr_session * s, struct tr_web_task * task )
     const tr_address * addr;
     CURL * e = curl_easy_init( );
     const long verbose = getenv( "TR_CURL_VERBOSE" ) != NULL;
-    char * cookie_filename = tr_buildPath( s->configDir, "cookies.txt", NULL );          
-
-    if( !task->range && s->isProxyEnabled ) {
-        const long proxyType = getCurlProxyType( s->proxyType );
-        curl_easy_setopt( e, CURLOPT_PROXY, s->proxy );
-        curl_easy_setopt( e, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-        curl_easy_setopt( e, CURLOPT_PROXYPORT, s->proxyPort );
-        curl_easy_setopt( e, CURLOPT_PROXYTYPE, proxyType );
-    }
-
-    if( !task->range && s->isProxyAuthEnabled ) {
-        char * str = tr_strdup_printf( "%s:%s", s->proxyUsername,
-                                                s->proxyPassword );
-        curl_easy_setopt( e, CURLOPT_PROXYUSERPWD, str );
-        tr_free( str );
-    }
+    char * cookie_filename = tr_buildPath( s->configDir, "cookies.txt", NULL );
 
     curl_easy_setopt( e, CURLOPT_AUTOREFERER, 1L );
-    curl_easy_setopt( e, CURLOPT_COOKIEFILE, cookie_filename ); 
+    curl_easy_setopt( e, CURLOPT_COOKIEFILE, cookie_filename );
     curl_easy_setopt( e, CURLOPT_ENCODING, "gzip;q=1.0, deflate, identity" );
     curl_easy_setopt( e, CURLOPT_FOLLOWLOCATION, 1L );
     curl_easy_setopt( e, CURLOPT_MAXREDIRS, -1L );
@@ -195,7 +172,7 @@ createEasy( tr_session * s, struct tr_web_task * task )
     if( task->range )
         curl_easy_setopt( e, CURLOPT_RANGE, task->range );
 
-    tr_free( cookie_filename ); 
+    tr_free( cookie_filename );
     return e;
 }
 
@@ -255,7 +232,7 @@ tr_webRun( tr_session         * session,
  * http://msdn.microsoft.com/en-us/library/ms740141%28VS.85%29.aspx
  * On win32, any two of the parameters, readfds, writefds, or exceptfds,
  * can be given as null. At least one must be non-null, and any non-null
- * descriptor set must contain at least one handle to a socket. 
+ * descriptor set must contain at least one handle to a socket.
  */
 static void
 tr_select( int nfds,
@@ -275,7 +252,7 @@ tr_select( int nfds,
         char errstr[512];
         const int e = EVUTIL_SOCKET_ERROR( );
         tr_net_strerror( errstr, sizeof( errstr ), e );
-        dbgmsg( "Error: select (%d) %s", e, errstr ); 
+        dbgmsg( "Error: select (%d) %s", e, errstr );
     }
 #else
     select( nfds, r_fd_set, w_fd_set, c_fd_set, t );
@@ -467,7 +444,7 @@ tr_http_escape( struct evbuffer  * out,
     if( ( len < 0 ) && ( str != NULL ) )
         len = strlen( str );
 
-    for( end=str+len; str!=end; ++str ) {
+    for( end=str+len; str && str!=end; ++str ) {
         if(    ( *str == ',' )
             || ( *str == '-' )
             || ( *str == '.' )

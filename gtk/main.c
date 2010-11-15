@@ -1196,6 +1196,10 @@ prefschanged( TrCore * core UNUSED, const char * key, gpointer data )
     {
         tr_blocklistSetEnabled( tr, pref_flag_get( key ) );
     }
+    else if( !strcmp( key, TR_PREFS_KEY_BLOCKLIST_URL ) )
+    {
+        tr_blocklistSetURL( tr, pref_string_get( key ) );
+    }
     else if( !strcmp( key, PREF_KEY_SHOW_TRAY_ICON ) )
     {
         const int show = pref_flag_get( key );
@@ -1285,34 +1289,6 @@ prefschanged( TrCore * core UNUSED, const char * key, gpointer data )
     else if( !strcmp( key, TR_PREFS_KEY_RPC_AUTH_REQUIRED ) )
     {
         tr_sessionSetRPCPasswordEnabled( tr, pref_flag_get( key ) );
-    }
-    else if( !strcmp( key, TR_PREFS_KEY_PROXY ) )
-    {
-        tr_sessionSetProxy( tr, pref_string_get( key ) );
-    }
-    else if( !strcmp( key, TR_PREFS_KEY_PROXY_TYPE ) )
-    {
-        tr_sessionSetProxyType( tr, pref_int_get( key ) );
-    }
-    else if( !strcmp( key, TR_PREFS_KEY_PROXY_ENABLED ) )
-    {
-        tr_sessionSetProxyEnabled( tr, pref_flag_get( key ) );
-    }
-    else if( !strcmp( key, TR_PREFS_KEY_PROXY_AUTH_ENABLED ) )
-    {
-        tr_sessionSetProxyAuthEnabled( tr, pref_flag_get( key ) );
-    }
-    else if( !strcmp( key, TR_PREFS_KEY_PROXY_USERNAME ) )
-    {
-        tr_sessionSetProxyUsername( tr, pref_string_get( key ) );
-    }
-    else if( !strcmp( key, TR_PREFS_KEY_PROXY_PASSWORD ) )
-    {
-        tr_sessionSetProxyPassword( tr, pref_string_get( key ) );
-    }
-    else if( !strcmp( key, TR_PREFS_KEY_PROXY_PORT ) )
-    {
-        tr_sessionSetProxyPort( tr, pref_int_get( key ) );
     }
     else if( !strcmp( key, TR_PREFS_KEY_ALT_SPEED_UP_KBps ) )
     {
@@ -1409,39 +1385,37 @@ onUriClicked( GtkAboutDialog * u UNUSED, const gchar * uri, gpointer u2 UNUSED )
 static void
 about( GtkWindow * parent )
 {
-    const char *authors[] =
-    {
+    GtkWidget * d;
+    const char * website_uri = "http://www.transmissionbt.com/";
+    const char * authors[] = {
         "Charles Kerr (Backend; GTK+)",
         "Mitchell Livingston (Backend; OS X)",
-        "Kevin Glowacz (Web client)",
         NULL
     };
 
-    const char * website_uri = "http://www.transmissionbt.com/";
-
     gtk_about_dialog_set_url_hook( onUriClicked, NULL, NULL );
 
-    gtk_show_about_dialog( parent,
-                           "name", g_get_application_name( ),
-                           "comments",
-                           _( "A fast and easy BitTorrent client" ),
-                           "version", LONG_VERSION_STRING,
-                           "website", website_uri,
-                           "website-label", website_uri,
-                           "copyright",
-                           _( "Copyright (c) The Transmission Project" ),
-                           "logo-icon-name", MY_CONFIG_NAME,
+    d = g_object_new( GTK_TYPE_ABOUT_DIALOG,
+                      "authors", authors,
+                      "comments", _( "A fast and easy BitTorrent client" ),
+                      "copyright", _( "Copyright (c) The Transmission Project" ),
+                      "logo-icon-name", MY_CONFIG_NAME,
+                      "name", g_get_application_name( ),
+                      /* Translators: translate "translator-credits" as your name
+                         to have it appear in the credits in the "About"
+                         dialog */
+                      "translator-credits", _( "translator-credits" ),
+                      "version", LONG_VERSION_STRING,
+                      "website", website_uri,
+                      "website-label", website_uri,
 #ifdef SHOW_LICENSE
-                           "license", LICENSE,
-                           "wrap-license", TRUE,
+                      "license", LICENSE,
+                      "wrap-license", TRUE,
 #endif
-                           "authors", authors,
-                           /* Translators: translate "translator-credits" as
-                              your name
-                              to have it appear in the credits in the "About"
-                              dialog */
-                           "translator-credits", _( "translator-credits" ),
-                           NULL );
+                      NULL );
+    gtk_window_set_transient_for( GTK_WINDOW( d ), parent );
+    g_signal_connect_swapped( d, "response", G_CALLBACK (gtk_widget_destroy), d );
+    gtk_widget_show_all( d );
 }
 
 static void
@@ -1729,9 +1703,8 @@ doAction( const char * action_name, gpointer user_data )
     {
         if( !data->msgwin )
         {
-            GtkWidget * win = msgwin_new( data->core );
-            g_signal_connect( win, "destroy", G_CALLBACK( msgwinclosed ),
-                              NULL );
+            GtkWidget * win = msgwin_new( data->core, data->wind );
+            g_signal_connect( win, "destroy", G_CALLBACK( msgwinclosed ), NULL );
             data->msgwin = win;
         }
         else
