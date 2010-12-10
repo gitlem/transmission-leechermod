@@ -1364,6 +1364,7 @@ Transmission.prototype =
 		setInnerHTML( tab.name, name );
 		setInnerHTML( tab.size, torrents.length ? fmt.size( total_size ) : na );
 		setInnerHTML( tab.pieces, pieces );
+		setInnerHTML( tab.cheat_mode, cheat_mode );
 		setInnerHTML( tab.hash, hash );
 		setInnerHTML( tab.state, total_state.join('/') );
 		setInnerHTML( tab.download_speed, torrents.length ? fmt.speedBps( total_download_speed ) : na );
