@@ -714,6 +714,16 @@ Details :: refresh( )
             i = -1;
         setIfIdle( myBandwidthPriorityCombo, i );
 
+        // myCheatModeCombo
+        uniform = true;
+        baselineInt = baseline->getCheatMode( );
+        foreach( tor, torrents ) if ( baselineInt != tor->getCheatMode( ) ) { uniform = false; break; }
+        if( uniform )
+            i = myCheatModeCombo->findData( baselineInt );
+        else
+            i = -1;
+        setIfIdle( myCheatModeCombo, i );
+
         setIfIdle( mySingleDownSpin, int(tor->downloadLimit().KBps()) );
         setIfIdle( mySingleUpSpin, int(tor->uploadLimit().KBps()) );
         setIfIdle( myPeerLimitSpin, tor->peerLimit() );
@@ -959,6 +969,16 @@ Details :: onBandwidthPriorityChanged( int index )
 }
 
 void
+Details :: onCheatModeChanged( int index )
+{
+    if( index != -1 )
+    {
+        const int priority = myCheatModeCombo->itemData(index).toInt( );
+        mySession.torrentSet( myIds, "cheatMode", priority );
+    }
+}
+
+void
 Details :: onTrackerSelectionChanged( )
 {
     const int selectionCount = myTrackerView->selectionModel()->selectedRows().size();
@@ -1114,6 +1134,19 @@ Details :: createOptionsTab( )
     connect( m, SIGNAL(currentIndexChanged(int)), this, SLOT(onBandwidthPriorityChanged(int)));
     hig->addRow( tr( "Torrent &priority:" ), m );
     myBandwidthPriorityCombo = m;
+
+    hig->addSectionDivider( );
+    hig->addSectionTitle( tr( "Cheat" ) );
+
+    m = new QComboBox;
+    m->addItem( tr( "No Cheat" ),                               TR_CHEAT_DEACT );
+    m->addItem( tr( "Always Leecher, report 0%" ),              TR_CHEAT_ALWLEECH );
+    m->addItem( tr( "Always Seeder, report real up, no down" ), TR_CHEAT_ALWSEED );
+    m->addItem( tr( "Report a ratio of ~2" ),                   TR_CHEAT_2RATIO );
+    m->addItem( tr( "Report a ratio of ~4" ),                   TR_CHEAT_4RATIO );
+    connect( m, SIGNAL(currentIndexChanged(int)), this, SLOT(onCheatModeChanged(int)));
+    hig->addRow( tr( "Cheat Mode:" ), m );
+    myCheatModeCombo = m;
 
     hig->addSectionDivider( );
     hig->addSectionTitle( tr( "Seeding Limits" ) );

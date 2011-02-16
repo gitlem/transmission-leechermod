@@ -93,6 +93,7 @@ struct OpenData
     GtkWidget *  run_check;
     GtkWidget *  trash_check;
     GtkWidget *  priority_combo;
+    GtkWidget *  cheatMode_combo;
     char *       filename;
     char *       downloadDir;
     TrTorrent *  gtor;
@@ -129,6 +130,8 @@ addResponseCB( GtkDialog * dialog,
             tr_torrent * tor = tr_torrent_handle( data->gtor );
 
             tr_torrentSetPriority( tor, gtr_priority_combo_get_value( GTK_COMBO_BOX( data->priority_combo ) ) );
+
+            tr_torrentSetCheatMode( tor, gtr_cheatMode_combo_get_value( GTK_COMBO_BOX( data->cheatMode_combo ) ) );
 
             if( gtk_toggle_button_get_active( GTK_TOGGLE_BUTTON( data->run_check ) ) )
                 tr_torrentStart( tor );
@@ -302,6 +305,9 @@ gtr_torrent_options_dialog_new( GtkWindow * parent, TrCore * core, tr_ctor * cto
     w = data->priority_combo = gtr_priority_combo_new( );
     gtr_priority_combo_set_value( GTK_COMBO_BOX( w ), TR_PRI_NORMAL );
 
+    w = data->cheatMode_combo = gtr_cheatMode_combo_new( );
+    gtr_cheatMode_combo_set_value( GTK_COMBO_BOX( w ), TR_CHEAT_DEACT );
+
     g_signal_connect( G_OBJECT( d ), "response",
                       G_CALLBACK( addResponseCB ), data );
 
@@ -358,6 +364,14 @@ gtr_torrent_options_dialog_new( GtkWindow * parent, TrCore * core, tr_ctor * cto
     ++col;
     gtk_table_attach( GTK_TABLE( t ), data->priority_combo, col, col + 1, row, row + 1, ~0, 0, 0, 0 );
     gtk_label_set_mnemonic_widget( GTK_LABEL( w ), data->priority_combo );
+
+    ++row;
+    col = 0;
+    w = gtk_label_new_with_mnemonic( _( "Cheat Mode:" ) );
+    gtk_misc_set_alignment( GTK_MISC( w ), 0.0f, 0.5f );
+    gtk_table_attach( GTK_TABLE( t ), w, col, col + 1, row, row + 1, ~0, 0, 0, 0 );
+    ++col;
+    gtk_table_attach( GTK_TABLE( t ), data->cheatMode_combo, col, col + 1, row, row + 1, ~0, 0, 0, 0 );
 
     ++row;
     col = 0;

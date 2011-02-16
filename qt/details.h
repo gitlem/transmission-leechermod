@@ -104,6 +104,7 @@ class Details: public QDialog
         QSpinBox * myIdleSpin;
         QSpinBox * myPeerLimitSpin;
         QComboBox * myBandwidthPriorityCombo;
+        QComboBox * myCheatModeCombo;
 
         QLabel * mySizeLabel;
         QLabel * myHashLabel;
@@ -137,6 +138,7 @@ class Details: public QDialog
 
     private slots:
         void refreshPref( int key );
+        void onCheatModeChanged( int );
         void onBandwidthPriorityChanged( int );
         void onFilePriorityChanged( const QSet<int>& fileIndices, int );
         void onFileWantedChanged( const QSet<int>& fileIndices, bool );
