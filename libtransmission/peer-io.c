@@ -100,7 +100,7 @@ didWriteWrapper( tr_peerIo * io, unsigned int bytes_transferred )
 
         const unsigned int payload = MIN( next->length, bytes_transferred );
         const unsigned int overhead = guessPacketOverhead( payload );
-        const uint64_t now = tr_sessionGetTimeMsec( io->session );
+        const uint64_t now = tr_time_msec( );
 
         tr_bandwidthUsed( &io->bandwidth, TR_UP, payload, next->isPieceData, now );
 
@@ -140,7 +140,7 @@ canReadWrapper( tr_peerIo * io )
     /* try to consume the input buffer */
     if( io->canRead )
     {
-        const uint64_t now = tr_sessionGetTimeMsec( io->session );
+        const uint64_t now = tr_time_msec( );
 
         tr_sessionLock( session );
 
@@ -774,7 +774,7 @@ evbuffer_peek_all( struct evbuffer * buf, size_t * setme_vecCount )
     struct evbuffer_iovec * iovec = tr_new0( struct evbuffer_iovec, vecCount );
     const int n = evbuffer_peek( buf, byteCount, NULL, iovec, vecCount );
     assert( n == vecCount );
-    *setme_vecCount = vecCount;
+    *setme_vecCount = n;
     return iovec;
 }
 
@@ -814,6 +814,12 @@ tr_peerIoWriteBytes( tr_peerIo * io, const void * bytes, size_t byteCount, tr_bo
 /***
 ****
 ***/
+
+void
+evbuffer_add_uint8( struct evbuffer * outbuf, uint8_t byte )
+{
+    evbuffer_add( outbuf, &byte, 1 );
+}
 
 void
 evbuffer_add_uint16( struct evbuffer * outbuf, uint16_t addme_hs )
