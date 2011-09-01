@@ -260,6 +260,9 @@ struct tr_torrent
     float                      desiredRatio;
     tr_ratiolimit              ratioLimitMode;
 
+    uint8_t                    cheatMode;
+    float                      cheatRand;
+
     uint16_t                   idleLimitMinutes;
     tr_idlelimit               idleLimitMode;
     bool                       finishedSeedingByIdle;

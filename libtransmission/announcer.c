@@ -887,6 +887,61 @@ tr_announcerAddBytes( tr_torrent * tor, int type, uint32_t byteCount )
 ****
 ***/
 
+static void
+letsCheat( const tr_tier * tier,
+           uint64_t * up,
+           uint64_t * down,
+           uint64_t * corrupt,
+           uint64_t * left,
+           tr_announce_event * event )
+{
+    tr_cheatMode_t cheatMode = tr_torrentGetCheatMode( tier->tor );
+
+    if(cheatMode == TR_CHEAT_DEACT) // no cheat
+    {
+        *up       = tier->byteCounts[TR_ANN_UP];
+        *down     = tier->byteCounts[TR_ANN_DOWN];
+        *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
+        *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
+    }
+    else if(cheatMode == TR_CHEAT_ALWLEECH) // always leecher
+    {
+        *up       = 0;
+        *down     = 0;
+        *corrupt  = 0;
+        *left     = tr_torrentInfo( tier->tor )->totalSize;
+        if( *event == TR_ANNOUNCE_EVENT_COMPLETED )
+        {
+            *event = TR_ANNOUNCE_EVENT_NONE;
+        }
+    }
+    else if(cheatMode == TR_CHEAT_ALWSEED) // always seeder, report real upload
+    {
+        *up       = tier->byteCounts[TR_ANN_UP];
+        *down     = 0;
+        *corrupt  = 0;
+        *left     = 0;
+        if( *event == TR_ANNOUNCE_EVENT_COMPLETED )
+        {
+            *event = TR_ANNOUNCE_EVENT_NONE;
+        }
+    }
+    else if(cheatMode == TR_CHEAT_2RATIO) // report (download * 1.95 <=> 2.05) upload
+    {
+        *up       = (int64_t)((1.95+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
+        *down     = tier->byteCounts[TR_ANN_DOWN];
+        *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
+        *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
+    }
+    else if(cheatMode == TR_CHEAT_4RATIO) // report (download * 3.95 <=> 4.05) upload
+    {
+        *up       = (int64_t)((3.95+tier->tor->cheatRand)*tier->byteCounts[TR_ANN_DOWN]);
+        *down     = tier->byteCounts[TR_ANN_DOWN];
+        *corrupt  = tier->byteCounts[TR_ANN_CORRUPT];
+        *left     = tr_cpLeftUntilComplete( &tier->tor->completion );
+    }
+}
+
 static tr_announce_request *
 announce_request_new( const tr_announcer  * announcer,
                       const tr_torrent    * tor,
@@ -903,6 +958,7 @@ announce_request_new( const tr_announcer  * announcer,
     req->down = tier->byteCounts[TR_ANN_DOWN];
     req->corrupt = tier->byteCounts[TR_ANN_CORRUPT];
     req->left = tr_cpLeftUntilComplete( &tor->completion ),
+    letsCheat( tier, &req->up, &req->down, &req->corrupt, &req->left, &event );
     req->event = event;
     req->numwant = event == TR_ANNOUNCE_EVENT_STOPPED ? 0 : NUMWANT;
     req->key = announcer->key;
